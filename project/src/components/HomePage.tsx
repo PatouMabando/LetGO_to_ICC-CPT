@@ -59,7 +59,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewChange }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Welcome to LetGO to ICC | Solution of not been late to Church
+              Welcome to LetGO to ICC | Solution of never been late to Church
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-4 max-w-3xl mx-auto">
               Premium transport service exclusively for ICC members in Cape Town.
