@@ -21,8 +21,9 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
             <div
-              className="p-2 rounded-lg"
-              style={{ background: 'linear-gradient(135deg, #4b0082, #0000cd)' }}
+              className="bg-blue-600 p-2 rounded-lg cursor-pointer transition-transform duration-200 hover:scale-110 hover:shadow-lg"
+              onClick={() => onViewChange('home')}
+              title="Go to Home"
             >
               <Car className="h-6 w-6 text-white" />
             </div>
@@ -90,8 +91,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
             ) : (
               <button
                 onClick={() => onViewChange('login')}
-                className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white transition-colors"
-                style={{ background: 'linear-gradient(135deg, #4b0082, #0000cd)' }}
+                className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Admin Login
