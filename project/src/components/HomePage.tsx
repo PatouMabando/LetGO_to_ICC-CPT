@@ -6,6 +6,21 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onViewChange }) => {
+  // Custom pulse animation for Crimson Red
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes crimsonPulse {
+        0%, 100% { color: #dc143c; text-shadow: 0 0 8px #dc143c44; }
+        50% { color: #fff; text-shadow: 0 0 24px #dc143c99; }
+      }
+      .crimson-pulse {
+        animation: crimsonPulse 1.5s infinite;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
   const features = [
     {
       icon: <Users className="h-8 w-8 text-blue-600" />,
@@ -52,17 +67,28 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewChange }) => {
     },
   ];
 
+  const [animate, setAnimate] = React.useState(false);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setAnimate(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
+      <div style={{ background: 'linear-gradient(135deg, #4b0082, #0000cd)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Welcome to LetGO to ICC | Solution of never been late to Church
+            <h1
+              className={`text-4xl md:text-6xl font-bold text-white mb-6 transition-all duration-1000 ease-out
+                ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            >
+              Welcome to LetGO to ICC 
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-4 max-w-3xl mx-auto">
-              Premium transport service exclusively for ICC members in Cape Town.
+            <p
+              className={`text-xl md:text-2xl mb-4 max-w-3xl mx-auto transition-all duration-1000 ease-out delay-200 crimson-pulse
+                ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            >
+              The solution to never being late to church!
             </p>
             <p className="text-lg text-blue-200 mb-8 max-w-2xl mx-auto">
               Safe, reliable transport to ICC with real-time tracking.

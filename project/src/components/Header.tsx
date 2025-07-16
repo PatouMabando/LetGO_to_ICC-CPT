@@ -20,7 +20,10 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
-            <div className="bg-blue-600 p-2 rounded-lg">
+            <div
+              className="p-2 rounded-lg"
+              style={{ background: 'linear-gradient(135deg, #4b0082, #0000cd)' }}
+            >
               <Car className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -87,7 +90,8 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onViewChange }) => 
             ) : (
               <button
                 onClick={() => onViewChange('login')}
-                className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white transition-colors"
+                style={{ background: 'linear-gradient(135deg, #4b0082, #0000cd)' }}
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Admin Login
