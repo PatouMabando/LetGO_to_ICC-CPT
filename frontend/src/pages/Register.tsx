@@ -93,7 +93,6 @@ const Register: React.FC = () => {
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
-        {/* Header Card */}
         <Card
           elevation={0}
           sx={{
@@ -222,7 +221,6 @@ const Register: React.FC = () => {
                   )}
                 </FormControl>
 
-                {/* Driver Details */}
                 {isDriver && (
                   <Fade in>
                     <Box>
@@ -277,7 +275,6 @@ const Register: React.FC = () => {
                   </Fade>
                 )}
 
-                {/* Submit */}
                 <Button
                   type="submit"
                   variant="contained"

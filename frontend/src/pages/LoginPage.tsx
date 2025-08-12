@@ -63,7 +63,6 @@ const Login: React.FC = () => {
     mode: "all",
   });
 
-  // Combined onSubmit handles both stages
   const onSubmit = handleSubmit(async (data) => {
     setMessage(null);
     setLoading(true);
@@ -129,7 +128,6 @@ const Login: React.FC = () => {
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 480, mx: "auto" }}>
-        {/* Header Card */}
         <Card
           elevation={0}
           sx={{

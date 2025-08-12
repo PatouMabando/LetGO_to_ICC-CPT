@@ -136,7 +136,6 @@ const seedBookings: Booking[] = [
 
 
 const AdminPage: React.FC = () => {
-  // Replace with your context/API in production
   const [members, setMembers] = useState<Member[]>(seedMembers);
   const [drivers, setDrivers] = useState<Driver[]>(seedDrivers);
   const [bookings, setBookings] = useState<Booking[]>(seedBookings);
@@ -232,7 +231,6 @@ const AdminPage: React.FC = () => {
           Admin
         </Typography>
 
-        {/* Overview */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
             <Box>
@@ -265,7 +263,6 @@ const AdminPage: React.FC = () => {
           </Stack>
         </Paper>
 
-        {/* Members */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Members
@@ -351,7 +348,6 @@ const AdminPage: React.FC = () => {
           </TableContainer>
         </Paper>
 
-        {/* Drivers */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             Drivers

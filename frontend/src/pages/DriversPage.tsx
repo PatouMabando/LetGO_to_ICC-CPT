@@ -19,7 +19,6 @@ import {
   Typography,
 } from "@mui/material";
 
-/** ===== Types ===== */
 type DriverStatus = "available" | "busy" | "offline";
 type BookingStatus =
   | "pending"
@@ -54,7 +53,6 @@ type Booking = {
   updatedAt?: string;
 };
 
-/** ===== Demo seed data (replace with API/context later) ===== */
 const seedDrivers: Driver[] = [
   {
     id: "d1",
@@ -105,13 +103,11 @@ const seedBookings: Booking[] = [
   },
 ];
 
-/** ===== Driver Page (minimal) ===== */
 const DriverPage: React.FC = () => {
-  // Replace with your context/API in production
+
   const [drivers, setDrivers] = useState<Driver[]>(seedDrivers);
   const [bookings, setBookings] = useState<Booking[]>(seedBookings);
 
-  // Current driver (demo: selectable). In real app, derive from auth.
   const [driverId, setDriverId] = useState<string>(drivers[0]?.id ?? "d1");
   const me = useMemo(
     () => drivers.find((d) => d.id === driverId),
@@ -144,7 +140,6 @@ const DriverPage: React.FC = () => {
           Driver
         </Typography>
 
-        {/* Who am I + availability (demo only) */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -179,7 +174,6 @@ const DriverPage: React.FC = () => {
           </Stack>
         </Paper>
 
-        {/* My assigned trips */}
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             My Assigned Trips
