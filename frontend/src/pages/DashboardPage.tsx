@@ -19,9 +19,9 @@ import {
   Menu as MenuIcon,
   Notifications,
 } from "@mui/icons-material";
-// import MemberDashboard from "@/components/MemberDashboard";
-// import DriverDashboard from "@/components/DriverDashboard";
+import DriverDashboard from "@/components/DriverDashboard";
 import AdminDashboard from "@/components/AdminDashboard";
+import MemberDashboard from "@/components/MemberDashboard";
 
 const roles = [
   { id: "member", name: "Member View", icon: <People /> },
@@ -66,9 +66,9 @@ const Dashboard = () => {
   const renderDashboard = () => {
     switch (currentRole) {
       case "member":
-        return <div>Member View</div>; // Replace with <MemberDashboard />
+        return <MemberDashboard />;
       case "driver":
-        return <div>Driver View</div>; // Replace with <DriverDashboard />
+        return  <DriverDashboard />
       case "admin":
         return <AdminDashboard />;
       default:

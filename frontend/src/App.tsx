@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { RouterProvider } from "react-router-dom";
 import { router } from "@/lib/router";
 
+
 function App() {
   return (
     <ErrorBoundary>
@@ -13,7 +14,9 @@ function App() {
         <RouterProvider router={router} />
       </AuthProvider>
     </ErrorBoundary>
+    
   );
 }
+
 
 export default App;

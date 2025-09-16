@@ -1,4 +1,5 @@
-import React from "react";
+// src/components/DriverDashboard.jsx
+import { useMemo } from "react";
 import {
   Box,
   Typography,
@@ -13,14 +14,65 @@ import {
 } from "@mui/material";
 import {
   Phone,
-  Star,
   Navigation,
   CheckCircle,
   AccessTime,
+  CalendarToday,
+  History,
+  DirectionsCar,
 } from "@mui/icons-material";
 import MapComponent from "@/components/MapComponent";
 
-const DriverDashboard = ({ data, theme }) => {
+/**
+ * Props:
+ * - data: {
+ *     status?: "available"|"busy"|"offline",
+ *     stats?: { completedToday?: number, earnings?: string|number, rating?: number },
+ *     currentTrip?: {
+ *       id?: string,
+ *       memberName?: string,
+ *       memberContact?: string,
+ *       pickupAddress?: string,
+ *       destination?: string,
+ *       pickupTime?: string
+ *     },
+ *     todaysTrips?: Array<{
+ *       id: string,
+ *       memberName?: string,
+ *       status?: "pending"|"assigned"|"arrived"|"completed",
+ *       pickupTime?: string
+ *     }>
+ *   }
+ * - theme?: MUI theme (optional)
+ * - onMarkArrived?: (tripId: string) => void
+ * - onCompleteTrip?: (tripId: string) => void
+ * - onStartNavigation?: (trip: any) => void
+ */
+export default function DriverDashboard({
+  data = {},
+  theme,
+  onMarkArrived,
+  onCompleteTrip,
+  onStartNavigation,
+}) {
+  const {
+    status = "available",
+    stats = {},
+    currentTrip,
+    todaysTrips = [],
+  } = data;
+
+  const statusColor = useMemo(() => {
+    switch (status) {
+      case "busy":
+        return "warning";
+      case "offline":
+        return "default";
+      default:
+        return "success";
+    }
+  }, [status]);
+
   return (
     <Box>
       {/* Driver Status Header */}
@@ -29,22 +81,17 @@ const DriverDashboard = ({ data, theme }) => {
         sx={{
           p: 3,
           mb: 3,
-          bgcolor: theme.palette.primary.main,
+          bgcolor: theme?.palette?.primary?.main || "primary.main",
           color: "white",
         }}
       >
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h6" fontWeight="bold">
             Driver Status
           </Typography>
           <Chip
-            label={data.status.toUpperCase()}
-            color={data.status === "busy" ? "warning" : "success"}
+            label={(status || "available").toUpperCase()}
+            color={statusColor}
             sx={{ color: "white", fontWeight: "bold" }}
           />
         </Box>
@@ -53,15 +100,15 @@ const DriverDashboard = ({ data, theme }) => {
           <Grid item xs={12} md={4}>
             <Paper
               sx={{
-                bgcolor: "rgba(255,255,255,0.1)",
+                bgcolor: "rgba(255,255,255,0.12)",
                 p: 2,
                 textAlign: "center",
               }}
             >
-              <Typography variant="h4" fontWeight="bold">
-                {data.stats.completedToday}
+              <Typography variant="h4" color="white"  fontWeight="bold ">
+                {stats.completedToday ?? 0}
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
+              <Typography variant="body2"  sx={{ opacity: 0.85 ,color: 'white' }}>
                 Completed Trips
               </Typography>
             </Paper>
@@ -69,40 +116,16 @@ const DriverDashboard = ({ data, theme }) => {
           <Grid item xs={12} md={4}>
             <Paper
               sx={{
-                bgcolor: "rgba(255,255,255,0.1)",
+                bgcolor: "rgba(255,255,255,0.12)",
                 p: 2,
                 textAlign: "center",
               }}
             >
-              <Typography variant="h4" fontWeight="bold">
-                {data.stats.earnings}
+              <Typography variant="h4" color="white" fontWeight="bold ">
+                 {stats.totalbookings ?? 0} {/*// to be added fetching from db */}
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Today's Earnings
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Paper
-              sx={{
-                bgcolor: "rgba(255,255,255,0.1)",
-                p: 2,
-                textAlign: "center",
-              }}
-            >
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                mb={1}
-              >
-                <Typography variant="h4" fontWeight="bold" mr={1}>
-                  {data.stats.rating}
-                </Typography>
-                <Star sx={{ color: "#FFD700" }} />
-              </Box>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Average Rating
+              <Typography variant="body2" sx={{ opacity: 0.85 ,color: 'white'}}>
+                Number of bookings
               </Typography>
             </Paper>
           </Grid>
@@ -110,11 +133,12 @@ const DriverDashboard = ({ data, theme }) => {
       </Paper>
 
       {/* Current Trip */}
-      {data.currentTrip && (
+      {currentTrip ? (
         <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" fontWeight="bold" color="primary" mb={2}>
             Current Trip
           </Typography>
+
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Stack spacing={2}>
@@ -124,17 +148,16 @@ const DriverDashboard = ({ data, theme }) => {
                     Member Details
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
-                    {data.currentTrip.memberName}
+                    {currentTrip.memberName || "—"}
                   </Typography>
-                  <Box display="flex" alignItems="center" mt={1}>
-                    <Phone
-                      fontSize="small"
-                      sx={{ mr: 1, color: "text.secondary" }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {data.currentTrip.memberContact}
-                    </Typography>
-                  </Box>
+                  {currentTrip.memberContact ? (
+                    <Box display="flex" alignItems="center" mt={1}>
+                      <Phone fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />
+                      <Typography variant="body2" color="text.secondary">
+                        {currentTrip.memberContact}
+                      </Typography>
+                    </Box>
+                  ) : null}
                 </Paper>
 
                 {/* Trip Details */}
@@ -143,13 +166,13 @@ const DriverDashboard = ({ data, theme }) => {
                     Trip Details
                   </Typography>
                   <Typography variant="body2">
-                    <strong>From:</strong> {data.currentTrip.pickupAddress}
+                    <strong>From:</strong> {currentTrip.pickupAddress || "—"}
                   </Typography>
                   <Typography variant="body2">
-                    <strong>To:</strong> {data.currentTrip.destination}
+                    <strong>To:</strong> {currentTrip.destination || "—"}
                   </Typography>
                   <Typography variant="body2">
-                    <strong>Pickup Time:</strong> {data.currentTrip.pickupTime}
+                    <strong>Pickup Time:</strong> {currentTrip.pickupTime || "—"}
                   </Typography>
                 </Paper>
 
@@ -160,6 +183,7 @@ const DriverDashboard = ({ data, theme }) => {
                     color="success"
                     fullWidth
                     startIcon={<CheckCircle />}
+                    onClick={() => currentTrip.id && onMarkArrived?.(currentTrip.id)}
                   >
                     Mark as Arrived
                   </Button>
@@ -168,6 +192,7 @@ const DriverDashboard = ({ data, theme }) => {
                     color="primary"
                     fullWidth
                     startIcon={<CheckCircle />}
+                    onClick={() => currentTrip.id && onCompleteTrip?.(currentTrip.id)}
                   >
                     Complete Trip
                   </Button>
@@ -187,11 +212,22 @@ const DriverDashboard = ({ data, theme }) => {
                 color="primary"
                 fullWidth
                 startIcon={<Navigation />}
+                onClick={() => onStartNavigation?.(currentTrip)}
               >
                 Start Navigation
               </Button>
             </Grid>
           </Grid>
+        </Paper>
+      ) : (
+        <Paper elevation={3} sx={{ p: 4, textAlign: "center", mb: 3 }}>
+          <DirectionsCar sx={{ fontSize: 56, color: "text.secondary" }} />
+          <Typography variant="h6" mt={2} mb={1} color="text.secondary">
+            No Current Trip
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            You’ll see your next assignment here when it’s available.
+          </Typography>
         </Paper>
       )}
 
@@ -201,43 +237,52 @@ const DriverDashboard = ({ data, theme }) => {
           Upcoming Trips
         </Typography>
         <List>
-          {data.todaysTrips.map((trip) => (
-            <ListItem key={trip.id} divider>
+          {(todaysTrips || []).length ? (
+            todaysTrips.map((trip) => (
+              <ListItem key={trip.id} divider>
+                <ListItemText
+                  primary={
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body1" fontWeight="medium">
+                        {trip.memberName || "—"}
+                      </Typography>
+                      <Chip
+                        label={(trip.status || "pending").toUpperCase()}
+                        color={
+                          trip.status === "pending"
+                            ? "warning"
+                            : trip.status === "completed"
+                            ? "success"
+                            : "info"
+                        }
+                        size="small"
+                      />
+                    </Box>
+                  }
+                  secondary={
+                    <Box display="flex" alignItems="center" mt={0.5}>
+                      <AccessTime fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Pickup: {trip.pickupTime || "—"}
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </ListItem>
+            ))
+          ) : (
+            <ListItem>
               <ListItemText
                 primary={
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography variant="body1" fontWeight="medium">
-                      {trip.memberName}
-                    </Typography>
-                    <Chip
-                      label={trip.status.toUpperCase()}
-                      color={trip.status === "pending" ? "warning" : "info"}
-                      size="small"
-                    />
-                  </Box>
-                }
-                secondary={
-                  <Box display="flex" alignItems="center" mt={0.5}>
-                    <AccessTime
-                      fontSize="small"
-                      sx={{ mr: 1, color: "text.secondary" }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      Pickup: {trip.pickupTime}
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    No upcoming trips
+                  </Typography>
                 }
               />
             </ListItem>
-          ))}
+          )}
         </List>
       </Paper>
     </Box>
   );
-};
-
-export default DriverDashboard;
+}

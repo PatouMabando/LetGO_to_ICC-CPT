@@ -10,7 +10,9 @@ import Admin from "@/pages/AdminPage";
 import Driver from "@/pages/DriversPage";
 import Members from "@/pages/MembersPage";
 import Bookings from "@/pages/BookingsPage";
+import TestApi from "@/pages/Testapi";  
 // import Settings from "@/pages/SettingsPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -29,6 +31,7 @@ export const router = createBrowserRouter([
     element: <Register />,
     errorElement: <ErrorPage />,
   },
+  { path: "/test-api", element: <TestApi /> },
 
   // Protected routes
   {
@@ -62,6 +65,7 @@ export const router = createBrowserRouter([
         path: ROUTES.BOOKINGS,
         element: <Bookings />,
       },
+      
       //   {
       //     path: ROUTES.SETTINGS,
       //     element: <Settings />,
