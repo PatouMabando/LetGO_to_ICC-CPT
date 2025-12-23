@@ -1,12 +1,10 @@
 export const ROUTES = {
-    LOGIN: '/login',
-    DASHBOARD: '/dashboard',
-    MEMBERS: '/members',
-    DRIVERS: '/drivers',
-    ADMIN: '/admin',
-    REGISTER: '/register',
-    PROFILE: '/profile',
-    SETTINGS: '/settings',
-    BOOKINGS: '/bookings',
-    ROOT: '/',
+    LOGIN: "/login",
+    REGISTER: "/register",
+
+    MEMBER_ROOT: "/member",
+    DRIVER_ROOT: "/driver",
+    ADMIN_ROOT: "/admin",
+
+    BOOKINGS: "/bookings",
 };

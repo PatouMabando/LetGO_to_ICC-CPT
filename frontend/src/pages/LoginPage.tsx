@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import {
   Paper,
   Stack,
-  TextField,
   Button,
   Typography,
   Alert,
-  InputAdornment,
   Box,
   Divider,
   Card,
@@ -14,7 +12,6 @@ import {
   Fade,
   Chip,
 } from "@mui/material";
-import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import SecurityIcon from "@mui/icons-material/Security";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChurchIcon from "@mui/icons-material/Church";
@@ -88,7 +85,7 @@ const Login: React.FC = () => {
           setLoading(false);
           return;
         }
-        await verifyOtp(data.otp);
+        const loggedInUser = await verifyOtp(data.otp);
         setMessage({
           type: "success",
           text: "Welcome! You're all set to book your trip.",
@@ -96,7 +93,15 @@ const Login: React.FC = () => {
         reset();
         setStage("phone");
         setDevOtp(undefined);
-        navigate("/dashboard");
+        
+        //Role Based Redirect
+        if (loggedInUser.role === "admin") {
+          navigate("/admin");
+        } else if (loggedInUser.role === "driver") {
+          navigate("/driver")
+        } else {
+          navigate("/member")
+        }
       }
     } catch (error: any) {
       setMessage({

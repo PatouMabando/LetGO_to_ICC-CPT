@@ -1,7 +1,7 @@
 
 import "dotenv/config";
 import mongoose from "mongoose";
-import User from "../models/User";
+import User  from "../models/User.js";
 
 async function main() {
     const uri = process.env.MONGO_URI || process.env.MONGO_URI;

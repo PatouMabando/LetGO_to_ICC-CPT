@@ -1,15 +1,9 @@
-import React, { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
-  Chip,
   Container,
-  FormControl,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
-  SelectChangeEvent,
   Stack,
   Table,
   TableBody,
@@ -19,327 +13,252 @@ import {
   TableRow,
   TextField,
   Typography,
+  Chip,
 } from "@mui/material";
+import { useAuth } from "@/context/AuthContext";
 
-type Member = {
-  id: string;
-  name: string;
-  contact: string;
-  address: string;
-  isActive: boolean;
+type Trip = {
+  _id: string;
+  title: string;
+  date: string;
+  totalSeats: number;
+  bookedSeats: number;
+  status: "open" | "closed";
 };
-type DriverStatus = "available" | "busy" | "offline";
-type Driver = {
-  id: string;
-  name: string;
-  contact: string;
+
+type DriverAssignment = {
+  _id: string;
   area: string;
-  vehicleType: string;
-  vehicleNumber: string;
-  status: DriverStatus;
+  availableSeats: number;
+  driverId: {
+    name: string;
+    lastName: string;
+  };
 };
-type BookingStatus =
-  | "pending"
-  | "accepted"
-  | "on-the-way"
-  | "arrived"
-  | "completed"
-  | "cancelled";
+
 type Booking = {
-  id: string;
-  memberId: string;
-  memberName: string;
-  memberContact: string;
-  driverId?: string;
-  driverName?: string;
-  driverContact?: string;
-  pickupAddress: string;
-  destination: string;
-  status: BookingStatus;
-  createdAt: string;
-  updatedAt?: string;
+  _id: string;
+  userId: {
+    name: string;
+    lastName: string;
+    phoneNumber: string;
+  };
+  tripId: {
+    title: string;
+  };
+  status: "confirmed" | "cancelled";
 };
 
-const seedMembers: Member[] = [
-  {
-    id: "m1",
-    name: "Sarah K",
-    contact: "082 111 2222",
-    address: "Heathfield",
-    isActive: true,
-  },
-  {
-    id: "m2",
-    name: "Andre K",
-    contact: "071 333 4444",
-    address: "Ottery",
-    isActive: true,
-  },
-  {
-    id: "m3",
-    name: "John D",
-    contact: "083 555 6666",
-    address: "Wynberg",
-    isActive: false,
-  },
-];
+const API = "http://localhost:5000/api";
 
-const seedDrivers: Driver[] = [
-  {
-    id: "d1",
-    name: "Peter M",
-    contact: "072 101 2020",
-    area: "Heathfield",
-    vehicleType: "Sedan",
-    vehicleNumber: "CA 123-456",
-    status: "available",
-  },
-  {
-    id: "d2",
-    name: "Grace L",
-    contact: "074 303 4040",
-    area: "Wynberg",
-    vehicleType: "Hatchback",
-    vehicleNumber: "CA 777-888",
-    status: "busy",
-  },
-];
+export default function AdminPage() {
+  const { token } = useAuth();
 
-const seedBookings: Booking[] = [
-  {
-    id: "BKG-1001",
-    memberId: "m1",
-    memberName: "Sarah K",
-    memberContact: "082 111 2222",
-    driverId: "d1",
-    driverName: "Peter M",
-    driverContact: "072 101 2020",
-    pickupAddress: "Heathfield",
-    destination: "Church – ICC",
-    status: "accepted",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "BKG-1002",
-    memberId: "m2",
-    memberName: "Andre K",
-    memberContact: "071 333 4444",
-    driverId: "d2",
-    driverName: "Grace L",
-    driverContact: "074 303 4040",
-    pickupAddress: "Ottery",
-    destination: "Church – ICC",
-    status: "pending",
-    createdAt: new Date().toISOString(),
-  },
-];
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [assignments, setAssignments] = useState<DriverAssignment[]>([]);
+  const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
 
-
-const AdminPage: React.FC = () => {
-  const [members, setMembers] = useState<Member[]>(seedMembers);
-  const [drivers, setDrivers] = useState<Driver[]>(seedDrivers);
-  const [bookings, setBookings] = useState<Booking[]>(seedBookings);
-
-  // Stats
-  const stats = useMemo(() => {
-    const totalMembers = members.length;
-    const activeMembers = members.filter((m) => m.isActive).length;
-    const totalDrivers = drivers.length;
-    const availableDrivers = drivers.filter(
-      (d) => d.status === "available"
-    ).length;
-    const totalBookings = bookings.length;
-    const activeBookings = bookings.filter(
-      (b) => !["completed", "cancelled"].includes(b.status)
-    ).length;
-    return {
-      totalMembers,
-      activeMembers,
-      totalDrivers,
-      availableDrivers,
-      totalBookings,
-      activeBookings,
-    };
-  }, [members, drivers, bookings]);
-
-  const toggleMemberStatus = (id: string) =>
-    setMembers((list) =>
-      list.map((m) => (m.id === id ? { ...m, isActive: !m.isActive } : m))
-    );
-
-  const updateDriverStatus = (id: string, status: DriverStatus) =>
-    setDrivers((list) => list.map((d) => (d.id === id ? { ...d, status } : d)));
-
-  const updateBookingStatus = (id: string, status: BookingStatus) =>
-    setBookings((list) =>
-      list.map((b) =>
-        b.id === id ? { ...b, status, updatedAt: new Date().toISOString() } : b
-      )
-    );
-
-  const [memberForm, setMemberForm] = useState({
-    name: "",
-    contact: "",
-    address: "",
-  });
-  const [driverForm, setDriverForm] = useState({
-    name: "",
-    contact: "",
-    area: "",
-    vehicleType: "",
-    vehicleNumber: "",
+  const [newTrip, setNewTrip] = useState({
+    title: "",
+    date: "",
+    totalSeats: 10,
   });
 
-  const addMember = () => {
-    if (!memberForm.name.trim()) return;
-    const m: Member = {
-      id: crypto.randomUUID(),
-      name: memberForm.name.trim(),
-      contact: memberForm.contact.trim(),
-      address: memberForm.address.trim(),
-      isActive: true,
-    };
-    setMembers((s) => [m, ...s]);
-    setMemberForm({ name: "", contact: "", address: "" });
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
   };
 
-  const addDriver = () => {
-    if (!driverForm.name.trim()) return;
-    const d: Driver = {
-      id: crypto.randomUUID(),
-      name: driverForm.name.trim(),
-      contact: driverForm.contact.trim(),
-      area: driverForm.area.trim(),
-      vehicleType: driverForm.vehicleType.trim(),
-      vehicleNumber: driverForm.vehicleNumber.trim(),
-      status: "available",
-    };
-    setDrivers((s) => [d, ...s]);
-    setDriverForm({
-      name: "",
-      contact: "",
-      area: "",
-      vehicleType: "",
-      vehicleNumber: "",
+  /* ================= LOAD BASE DATA ================= */
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [t, b] = await Promise.all([
+          fetch(`${API}/trips`, { headers }),
+          fetch(`${API}/bookings`, { headers }),
+        ]);
+
+        const tripsJson = await t.json();
+        const bookingsJson = await b.json();
+
+        setTrips(Array.isArray(tripsJson) ? tripsJson : []);
+        setBookings(Array.isArray(bookingsJson) ? bookingsJson : []);
+      } catch (err) {
+        console.error("Admin load failed", err);
+        setTrips([]);
+        setBookings([]);
+      }
+    }
+
+    load();
+  }, [token]);
+
+  /* ================= DRIVER ASSIGNMENTS ================= */
+
+  async function loadAssignments(tripId: string) {
+    setSelectedTrip(tripId);
+    setAssignments([]); // reset first
+
+    try {
+      const res = await fetch(`${API}/driver-assignments/${tripId}`, {
+        headers,
+      });
+
+      if (!res.ok) {
+        setAssignments([]);
+        return;
+      }
+
+      const json = await res.json();
+
+      // NORMALIZE RESPONSE
+      if (Array.isArray(json)) {
+        setAssignments(json);
+      } else if (Array.isArray(json.assignments)) {
+        setAssignments(json.assignments);
+      } else {
+        setAssignments([]);
+      }
+    } catch (err) {
+      console.error("Failed to load driver assignments", err);
+      setAssignments([]);
+    }
+  }
+
+  /* ================= TRIP ACTIONS ================= */
+
+  async function createTrip() {
+    if (!newTrip.title || !newTrip.date) return;
+
+    const res = await fetch(`${API}/trips`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(newTrip),
     });
-  };
+
+    const trip = await res.json();
+    setTrips((prev) => [trip, ...prev]);
+    setNewTrip({ title: "", date: "", totalSeats: 10 });
+  }
+
+  async function closeTrip(tripId: string) {
+    await fetch(`${API}/trips/${tripId}/close`, {
+      method: "PATCH",
+      headers,
+    });
+
+    setTrips((list) =>
+      list.map((t) => (t._id === tripId ? { ...t, status: "closed" } : t))
+    );
+  }
+
+  /* ================= RENDER ================= */
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h4" fontWeight={800} sx={{ mb: 3 }}>
-          Admin
+        <Typography variant="h4" fontWeight={800} mb={3}>
+          Admin Dashboard
         </Typography>
 
+        {/* CREATE TRIP */}
         <Paper sx={{ p: 2, mb: 3 }}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Members
-              </Typography>
-              <Typography variant="h5">{stats.totalMembers}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {stats.activeMembers} active
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Drivers
-              </Typography>
-              <Typography variant="h5">{stats.totalDrivers}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {stats.availableDrivers} available
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="body2" color="text.secondary">
-                Bookings
-              </Typography>
-              <Typography variant="h5">{stats.totalBookings}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                {stats.activeBookings} active
-              </Typography>
-            </Box>
+          <Typography fontWeight="bold" mb={2}>
+            Create Trip
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            <TextField
+              size="small"
+              label="Title"
+              value={newTrip.title}
+              onChange={(e) =>
+                setNewTrip({ ...newTrip, title: e.target.value })
+              }
+            />
+            <TextField
+              size="small"
+              type="date"
+              label="Date"
+              InputLabelProps={{ shrink: true }}
+              value={newTrip.date}
+              onChange={(e) => setNewTrip({ ...newTrip, date: e.target.value })}
+            />
+            <TextField
+              size="small"
+              type="number"
+              label="Seats"
+              value={newTrip.totalSeats}
+              onChange={(e) =>
+                setNewTrip({
+                  ...newTrip,
+                  totalSeats: Number(e.target.value),
+                })
+              }
+            />
+            <Button variant="contained" onClick={createTrip}>
+              Create
+            </Button>
           </Stack>
         </Paper>
 
+        {/* TRIPS */}
         <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Members
+          <Typography fontWeight="bold" mb={2}>
+            Trips
           </Typography>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ mb: 2 }}
-          >
-            <TextField
-              size="small"
-              label="Name"
-              value={memberForm.name}
-              onChange={(e) =>
-                setMemberForm({ ...memberForm, name: e.target.value })
-              }
-            />
-            <TextField
-              size="small"
-              label="Contact"
-              value={memberForm.contact}
-              onChange={(e) =>
-                setMemberForm({ ...memberForm, contact: e.target.value })
-              }
-            />
-            <TextField
-              size="small"
-              label="Address"
-              value={memberForm.address}
-              onChange={(e) =>
-                setMemberForm({ ...memberForm, address: e.target.value })
-              }
-            />
-            <Button variant="contained" onClick={addMember}>
-              Add
-            </Button>
-          </Stack>
 
           <TableContainer>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Contact</TableCell>
-                  <TableCell>Address</TableCell>
+                  <TableCell>Title</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Seats</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Toggle</TableCell>
+                  <TableCell />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {members.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell>{m.name}</TableCell>
-                    <TableCell>{m.contact}</TableCell>
-                    <TableCell>{m.address}</TableCell>
+                {trips.map((t) => (
+                  <TableRow key={t._id}>
+                    <TableCell>{t.title}</TableCell>
+                    <TableCell>
+                      {new Date(t.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {t.bookedSeats}/{t.totalSeats}
+                    </TableCell>
                     <TableCell>
                       <Chip
-                        size="small"
-                        label={m.isActive ? "Active" : "Inactive"}
-                        color={m.isActive ? "success" : "default"}
+                        label={t.status}
+                        color={t.status === "open" ? "success" : "default"}
                       />
                     </TableCell>
                     <TableCell>
                       <Button
                         size="small"
-                        variant="outlined"
-                        onClick={() => toggleMemberStatus(m.id)}
+                        onClick={() => loadAssignments(t._id)}
                       >
-                        {m.isActive ? "Deactivate" : "Activate"}
+                        View Drivers
                       </Button>
+                      {t.status === "open" && (
+                        <Button
+                          size="small"
+                          color="error"
+                          onClick={() => closeTrip(t._id)}
+                        >
+                          Close
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
-                {members.length === 0 && (
+                {trips.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      No members
+                      No trips
                     </TableCell>
                   </TableRow>
                 )}
@@ -348,193 +267,63 @@ const AdminPage: React.FC = () => {
           </TableContainer>
         </Paper>
 
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Drivers
-          </Typography>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={2}
-            sx={{ mb: 2 }}
-          >
-            <TextField
-              size="small"
-              label="Name"
-              value={driverForm.name}
-              onChange={(e) =>
-                setDriverForm({ ...driverForm, name: e.target.value })
-              }
-            />
-            <TextField
-              size="small"
-              label="Contact"
-              value={driverForm.contact}
-              onChange={(e) =>
-                setDriverForm({ ...driverForm, contact: e.target.value })
-              }
-            />
-            <TextField
-              size="small"
-              label="Area"
-              value={driverForm.area}
-              onChange={(e) =>
-                setDriverForm({ ...driverForm, area: e.target.value })
-              }
-            />
-            <TextField
-              size="small"
-              label="Vehicle Type"
-              value={driverForm.vehicleType}
-              onChange={(e) =>
-                setDriverForm({ ...driverForm, vehicleType: e.target.value })
-              }
-            />
-            <TextField
-              size="small"
-              label="Vehicle Number"
-              value={driverForm.vehicleNumber}
-              onChange={(e) =>
-                setDriverForm({ ...driverForm, vehicleNumber: e.target.value })
-              }
-            />
-            <Button variant="contained" onClick={addDriver}>
-              Add
-            </Button>
-          </Stack>
+        {/* DRIVER ASSIGNMENTS */}
+        {selectedTrip && (
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography fontWeight="bold" mb={2}>
+              Driver Assignments
+            </Typography>
 
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Driver</TableCell>
-                  <TableCell>Area</TableCell>
-                  <TableCell>Vehicle</TableCell>
-                  <TableCell>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {drivers.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell>
-                      <Typography fontWeight={600}>{d.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {d.contact}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{d.area}</TableCell>
-                    <TableCell>
-                      <Typography>{d.vehicleType}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {d.vehicleNumber}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>Status</InputLabel>
-                        <Select
-                          label="Status"
-                          value={d.status}
-                          onChange={(e: SelectChangeEvent) =>
-                            updateDriverStatus(
-                              d.id,
-                              e.target.value as DriverStatus
-                            )
-                          }
-                        >
-                          <MenuItem value="available">Available</MenuItem>
-                          <MenuItem value="busy">Busy</MenuItem>
-                          <MenuItem value="offline">Offline</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {drivers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      No drivers
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+            {assignments.length > 0 ? (
+              assignments.map((a) => (
+                <Paper key={a._id} sx={{ p: 2, mb: 1 }}>
+                  <Typography>
+                    {a.driverId.name} {a.driverId.lastName}
+                  </Typography>
+                  <Typography color="text.secondary">Area: {a.area}</Typography>
+                  <Typography color="text.secondary">
+                    Seats left: {a.availableSeats}
+                  </Typography>
+                </Paper>
+              ))
+            ) : (
+              <Typography color="text.secondary">
+                No drivers assigned to this trip
+              </Typography>
+            )}
+          </Paper>
+        )}
 
-        {/* Bookings */}
+        {/* BOOKINGS */}
         <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
+          <Typography fontWeight="bold" mb={2}>
             Bookings
           </Typography>
+
           <TableContainer>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
                   <TableCell>Member</TableCell>
-                  <TableCell>Driver</TableCell>
-                  <TableCell>Route</TableCell>
+                  <TableCell>Trip</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Created</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {bookings.map((b) => (
-                  <TableRow key={b.id}>
-                    <TableCell>#{b.id}</TableCell>
+                  <TableRow key={b._id}>
                     <TableCell>
-                      <Typography fontWeight={600}>{b.memberName}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {b.memberContact}
-                      </Typography>
+                      {b.userId.name} {b.userId.lastName}
                     </TableCell>
+                    <TableCell>{b.tripId.title}</TableCell>
                     <TableCell>
-                      {b.driverName ?? "-"}
-                      {b.driverContact ? (
-                        <Typography variant="body2" color="text.secondary">
-                          {b.driverContact}
-                        </Typography>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {b.pickupAddress} → {b.destination}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <FormControl size="small">
-                        <Select
-                          value={b.status}
-                          onChange={(e: SelectChangeEvent) =>
-                            updateBookingStatus(
-                              b.id,
-                              e.target.value as BookingStatus
-                            )
-                          }
-                        >
-                          {[
-                            "pending",
-                            "accepted",
-                            "on-the-way",
-                            "arrived",
-                            "completed",
-                            "cancelled",
-                          ].map((s) => (
-                            <MenuItem key={s} value={s}>
-                              {s}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(b.createdAt).toLocaleDateString()}
+                      <Chip label={b.status} />
                     </TableCell>
                   </TableRow>
                 ))}
                 {bookings.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={3} align="center">
                       No bookings
                     </TableCell>
                   </TableRow>
@@ -546,6 +335,4 @@ const AdminPage: React.FC = () => {
       </Container>
     </Box>
   );
-};
-
-export default AdminPage;
+}

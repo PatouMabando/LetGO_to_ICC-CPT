@@ -1,24 +1,27 @@
+
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { ROUTES } from "./routes";
+
 import Login from "@/pages/LoginPage";
-import { ErrorPage } from "@/components/ErrorPages";
 import Register from "@/pages/Register";
-import { AuthCheck } from "@/components/AuthCheck";
-import { Layout } from "@/components/Layout";
-import Dashboard from "@/pages/DashboardPage";
 import Admin from "@/pages/AdminPage";
-import Driver from "@/pages/DriversPage";
-import Members from "@/pages/MembersPage";
+import Driver from "@/pages/driver/DriversPage";
+import Members from "@/pages/member/MembersPage";
 import Bookings from "@/pages/BookingsPage";
-// import Settings from "@/pages/SettingsPage";
+
+import { Layout } from "@/components/Layout";
+import { ErrorPage } from "@/components/ErrorPages";
+import { AuthCheck } from "@/auth/AuthCheck";
+import { RequireRole } from "@/auth/RequireRole";
 
 export const router = createBrowserRouter([
+  // Redirect root
   {
-    path: ROUTES.ROOT,
+    path: "/",
     element: <Navigate to={ROUTES.LOGIN} replace />,
   },
 
-  // Public routes
+  // Public
   {
     path: ROUTES.LOGIN,
     element: <Login />,
@@ -30,9 +33,7 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
   },
 
-  // Protected routes
   {
-    path: ROUTES.ROOT,
     element: (
       <AuthCheck>
         <Layout>
@@ -40,32 +41,46 @@ export const router = createBrowserRouter([
         </Layout>
       </AuthCheck>
     ),
-    errorElement: <ErrorPage />,
     children: [
+      // MEMBER
       {
-        path: ROUTES.DASHBOARD,
-        element: <Dashboard />,
+        path: ROUTES.MEMBER_ROOT,
+        element: (
+          <RequireRole allow={["member"]}>
+            <Members />
+          </RequireRole>
+        ),
       },
+
+      // DRIVER
       {
-        path: ROUTES.ADMIN,
-        element: <Admin />,
+        path: ROUTES.DRIVER_ROOT,
+        element: (
+          <RequireRole allow={["driver"]}>
+            <Driver />
+          </RequireRole>
+        ),
       },
+
+      // ADMIN
       {
-        path: ROUTES.DRIVERS,
-        element: <Driver />,
+        path: ROUTES.ADMIN_ROOT,
+        element: (
+          <RequireRole allow={["admin"]}>
+            <Admin />
+          </RequireRole>
+        ),
       },
-      {
-        path: ROUTES.MEMBERS,
-        element: <Members />,
-      },
+
+      // BOOKINGS (admin + member)
       {
         path: ROUTES.BOOKINGS,
-        element: <Bookings />,
+        element: (
+          <RequireRole allow={["admin", "member"]}>
+            <Bookings />
+          </RequireRole>
+        ),
       },
-      //   {
-      //     path: ROUTES.SETTINGS,
-      //     element: <Settings />,
-      //   },
     ],
   },
 ]);

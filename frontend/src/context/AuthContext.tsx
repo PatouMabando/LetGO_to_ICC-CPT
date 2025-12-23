@@ -11,7 +11,7 @@ type Ctx = {
   role?: Role; 
   phoneNumber: string;
   startLogin: (phone: string) => Promise<{ devOtp?: string }>;
-  verifyOtp: (otp: string) => Promise<void>;
+  verifyOtp: (otp: string) => Promise<User>;
   logout: () => void;
   setPhoneNumber: (v: string) => void;
 };
@@ -42,6 +42,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({
     setUser(res.user);
     localStorage.setItem("token", res.token);
     localStorage.setItem("user", JSON.stringify(res.user));
+    return res.user;
   }
 
   function logout() {

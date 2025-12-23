@@ -5,7 +5,7 @@ export type User = {
     name: string;
     lastName: string;
     phoneNumber: string;
-    role: "driver" | "passenger" | "admin";
+    role: "member" | "driver" | "admin";
 };
 
 export type LoginStartResponse = { message: string; userId: string; devOtp?: string };

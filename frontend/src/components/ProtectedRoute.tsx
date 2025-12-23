@@ -9,16 +9,24 @@ const ProtectedRoute: React.FC<React.PropsWithChildren<{ roles?: Role[] }>> = ({
   children,
   roles,
 }) => {
-  const { token, role } = useAuth(); 
+  const { token, role } = useAuth();
 
-  // Not logged in? -> go to login
-  if (!token) return <Navigate to="/login" replace />;
-
-  // Logged in but role not allowed? -> go to dashboard
-  if (roles && role && !roles.includes(role)) {
-    return <Navigate to="/dashboard" replace />;
+  // 1. Not logged in → login
+  if (!token) {
+    return <Navigate to="/login" replace />;
   }
 
+  // 2. Logged in but role not yet loaded (page refresh)
+  if (!role) {
+    return null; // or loading spinner if you want
+  }
+
+  // 3. Logged in but role not allowed
+  if (roles && !roles.includes(role)) {
+    return <Navigate to={`/${role}`} replace />;
+  }
+
+  // 4. Allowed
   return <>{children}</>;
 };
 

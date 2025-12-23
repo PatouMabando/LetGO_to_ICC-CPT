@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
+    "dev": "nodemon dist/index.js",
     "seed:admin": "tsx src/scripts/bootstrapAdmin.ts",
-    "compile": "tsc"
+    "compile": "tsc",
+    "compile:watch": "tsc --watch"
   },
   "type": "module",
   "keywords": [],
@@ -22,6 +23,9 @@
     "twilio": "^5.8.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
