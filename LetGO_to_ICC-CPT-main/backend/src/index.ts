@@ -2,6 +2,7 @@
 import express, { Application } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import bodyParser from "body-parser";
 
 import authRoutes from "./routes/auth.route.js"
 import bookingRoutes from "./routes/booking.route.js"
@@ -15,7 +16,7 @@ dotenv.config();
 const app: Application = express();
 
 // Middleware
-app.use(express.json());
+app.use(bodyParser.json());
 app.use(
   cors({
     origin: "http://localhost:5173",

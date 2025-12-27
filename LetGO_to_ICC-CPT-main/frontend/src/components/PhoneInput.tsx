@@ -1,43 +1,57 @@
-import React from "react";
-import { TextField, InputAdornment, TextFieldProps } from "@mui/material";
+import { TextField, InputAdornment } from "@mui/material";
 import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
-import { UseFormRegister, FieldErrors } from "react-hook-form";
+import { FieldErrors, UseFormRegister } from "react-hook-form";
 
-type PhoneInputProps = Omit<TextFieldProps, "name"> & {
-  name?: string; // default "phone"
-  register: UseFormRegister<any>; // form register function
-  errors: FieldErrors<any>; // form errors object
+type PhoneInputProps = {
+  register: UseFormRegister<any>;
+  errors: FieldErrors<any>;
+  name?: string;
   label?: string;
   placeholder?: string;
+  disabled?: boolean;
 };
 
 const PhoneInput: React.FC<PhoneInputProps> = ({
   register,
   errors,
   name = "phone",
-  label = "Mobile Number (E.164 format)",
-  placeholder = "+27821234567",
+  label = "Phone number",
+  placeholder = "+27780492663",
   disabled = false,
-  ...rest
 }) => {
+  const errorMessage = errors[name]?.message as string | undefined;
+
   return (
     <TextField
       label={label}
       placeholder={placeholder}
       fullWidth
       required
-      error={!!errors[name]}
       {...register(name)}
       disabled={disabled}
+      error={!!errorMessage}
+      helperText={errorMessage} // ✅ MESSAGE AFFICHÉ
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">
-            <PhoneIphoneIcon color="primary" />
+            <PhoneIphoneIcon sx={{ color: "#FF9900" }} />
           </InputAdornment>
         ),
-        ...rest.InputProps,
       }}
-      {...rest}
+      sx={{
+        "& .MuiOutlinedInput-root": {
+          borderRadius: "12px",
+          "& fieldset": {
+            borderColor: "#142C54",
+          },
+          "&:hover fieldset": {
+            borderColor: "#FF9900",
+          },
+          "&.Mui-focused fieldset": {
+            borderColor: "#FF9900",
+          },
+        },
+      }}
     />
   );
 };

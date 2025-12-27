@@ -1,301 +1,223 @@
-import React, { useState } from "react";
-import {
-  Paper,
-  Stack,
-  Button,
-  Typography,
-  Alert,
-  Box,
-  Divider,
-  Card,
-  CardContent,
-  Fade,
-  Chip,
-} from "@mui/material";
-import SecurityIcon from "@mui/icons-material/Security";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ChurchIcon from "@mui/icons-material/Church";
-import DirectionsBusIcon from "@mui/icons-material/DirectionsBus";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-
-import {
-  RegisterOptions,
-  useForm,
-  UseFormRegisterReturn,
-} from "react-hook-form";
+import { Box, Button, Paper, Stack, Typography, Alert } from "@mui/material";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-import { useAuth } from "../context/AuthContext";
-import { loginSchema } from "@/validations/auth";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+import { loginSchema } from "@/validations/auth";
+import { useAuth } from "@/context/AuthContext";
 import PhoneInput from "@/components/PhoneInput";
-import CustomInput from "@/components/CustomInput";
+import AuthLayout from "@/components/AuthLayout";
+
+import loginImage from "@/assets/loginimage.svg";
+import logo from "@/assets/ICC LOGO (1).svg";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
 
 type LoginFormValues = {
-  phone: string;
-  otp?: string;
+  phone?: string;
 };
 
-const Login: React.FC = () => {
-  const { startLogin, verifyOtp, setPhoneNumber, phoneNumber, user } =
-    useAuth();
+const RESEND_DELAY = 30; // seconds
 
-  const [stage, setStage] = useState<"phone" | "otp">("phone");
-  const [devOtp, setDevOtp] = useState<string | undefined>();
-  const [message, setMessage] = useState<{
-    type: "error" | "success";
-    text: string;
-  } | null>(null);
-  const [loading, setLoading] = useState(false);
-
+const Login = () => {
+  const { startLogin, setPhoneNumber } = useAuth();
   const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState<number>(0);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
-    reset,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    mode: "all",
+    mode: "onSubmit",
   });
 
+  const phoneValue = watch("phone");
+
+  // 🔁 Reset cooldown & error when phone number changes
+  useEffect(() => {
+    setCooldown(0);
+    setError(null);
+  }, [phoneValue]);
+
+  // ⏱ Countdown effect (visual decrement)
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
   const onSubmit = handleSubmit(async (data) => {
-    setMessage(null);
-    setLoading(true);
+    const phone = data.phone;
+    const storageKey = `otpCooldown_${phone}`;
+    const lastSent = localStorage.getItem(storageKey);
+
+    // 🔒 Same phone requesting too fast
+    if (lastSent) {
+      const elapsed = Math.floor((Date.now() - Number(lastSent)) / 1000);
+      if (elapsed < RESEND_DELAY) {
+        setError("You have already requested a verification code.");
+        setCooldown(RESEND_DELAY - elapsed);
+        return;
+      }
+    }
 
     try {
-      if (stage === "phone") {
-        // Send OTP
-        const res = await startLogin(data.phone);
-        setPhoneNumber(data.phone);
-        setDevOtp(res.devOtp);
-        setStage("otp");
-        setMessage({
-          type: "success",
-          text: "Verification code sent! Please check your phone.",
-        });
-      } else {
-        // Verify OTP
-        if (!data.otp) {
-          setMessage({
-            type: "error",
-            text: "Please enter the 6-digit verification code.",
-          });
-          setLoading(false);
-          return;
-        }
-        const loggedInUser = await verifyOtp(data.otp);
-        setMessage({
-          type: "success",
-          text: "Welcome! You're all set to book your trip.",
-        });
-        reset();
-        setStage("phone");
-        setDevOtp(undefined);
-        
-        //Role Based Redirect
-        if (loggedInUser.role === "admin") {
-          navigate("/admin");
-        } else if (loggedInUser.role === "driver") {
-          navigate("/driver")
-        } else {
-          navigate("/member")
-        }
-      }
-    } catch (error: any) {
-      setMessage({
-        type: "error",
-        text: error?.message || "Operation failed. Please try again.",
-      });
+      setLoading(true);
+      setError(null);
+
+      await startLogin(phone);
+      setPhoneNumber(phone);
+
+      localStorage.setItem(storageKey, Date.now().toString());
+
+      navigate("/verify-otp");
+    } catch (err: any) {
+      setError(
+        err?.message ||
+        "No phone number found. Please contact your administrator."
+      );
     } finally {
       setLoading(false);
     }
   });
 
-  const backToPhone = () => {
-    setStage("phone");
-    setMessage(null);
-    setDevOtp(undefined);
-    reset({ phone: phoneNumber, otp: "" });
-  };
-
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #E3F2FD 0%, #F1F8FE 50%, #FAFBFF 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 2,
-      }}
-    >
-      <Box sx={{ width: "100%", maxWidth: 480, mx: "auto" }}>
-        <Card
-          elevation={0}
+    <AuthLayout image={<img src={loginImage} width="63%" />}>
+      {/* BACK ARROW */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 24,
+          left: 24,
+          zIndex: 10,
+        }}
+      >
+        <Button
+          onClick={() => navigate("/")}
           sx={{
-            mb: 3,
-            background: "linear-gradient(135deg, #1565C0 0%, #1976D2 100%)",
-            color: "white",
+            minWidth: "auto",
+            p: 1,
+            borderRadius: "50%",
+            bgcolor: "rgba(255,255,255,0.85)",
+            color: "#142C54",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+            "&:hover": {
+              bgcolor: "#FF9900",
+              color: "#fff",
+            },
           }}
         >
-          <CardContent sx={{ textAlign: "center", py: 3 }}>
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-              <Box
+          <ArrowBackIcon sx={{ fontSize: 28 }} />
+        </Button>
+      </Box>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          width: "100%",
+          maxWidth: 360,
+          bgcolor: "transparent",
+        }}
+      >
+        <Stack spacing={3}>
+          {/* HEADER */}
+          <Stack spacing={2} alignItems="center">
+            <Box
+              component="img"
+              src={logo}
+              alt="ICC Logo"
+              sx={{ height: 100 }}
+            />
+
+            <Typography
+              variant="h5"
+              fontWeight={600}
+              sx={{ color: "#142C54", textAlign: "center" }}
+            >
+              Let’s go to{" "}
+              <Box component="span" sx={{ color: "#FF9900" }}>
+                ICC
+              </Box>{" "}
+              Cape Town
+            </Typography>
+          </Stack>
+
+          {/* FORM */}
+          <form onSubmit={onSubmit} noValidate>
+            <Stack spacing={2.5}>
+              <PhoneInput
+                register={register}
+                errors={errors}
+                name="phone"
+                placeholder="+27780492663"
+              />
+
+              {/* MAIN ERROR */}
+              {error && (
+                <Alert
+                  severity="warning"
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: "#FFF7ED",
+                    color: "#9A3412",
+                    border: "1px solid #FF9900",
+                    "& .MuiAlert-icon": { color: "#FF9900" },
+                  }}
+                >
+                  {error}
+                </Alert>
+              )}
+
+              {/* COUNTDOWN MESSAGE */}
+              {cooldown > 0 && (
+                <Alert
+                  severity="info"
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: "#FFF7ED",
+                    color: "#7C2D12",
+                    border: "1px dashed #FF9900",
+                    fontSize: "0.9rem",
+                    "& .MuiAlert-icon": { color: "#FF9900" },
+                  }}
+                >
+                  Please wait <strong>{cooldown}</strong> second
+                  {cooldown > 1 ? "s" : ""} before requesting a new code.
+                </Alert>
+              )}
+
+              {/* BUTTON — ORANGE */}
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={loading || cooldown > 0}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: "rgba(255, 255, 255, 0.15)",
+                  bgcolor: "#FF9900",
+                  borderRadius: "12px",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": { bgcolor: "#e68a00" },
                 }}
               >
-                <ChurchIcon sx={{ fontSize: 28 }} />
-                <DirectionsBusIcon sx={{ fontSize: 24 }} />
-              </Box>
-            </Box>
-            <Typography variant="h4" fontWeight={600} gutterBottom>
-              Sign In to ICC
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Book your seat for our upcoming journey of faith and fellowship
-            </Typography>
-          </CardContent>
-        </Card>
-
-        <Paper
-          elevation={8}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            background: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(10px)",
-          }}
-        >
-          <Stack spacing={3}>
-            {user && (
-              <Fade in timeout={600}>
-                <Alert
-                  severity="success"
-                  icon={<CheckCircleOutlineIcon />}
-                  sx={{
-                    borderRadius: 2,
-                    "& .MuiAlert-message": { width: "100%" },
-                  }}
-                >
-                  <Box>
-                    <Typography variant="body1" fontWeight={500}>
-                      Welcome back, {user.name}!
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {user.phoneNumber}
-                    </Typography>
-                  </Box>
-                </Alert>
-              </Fade>
-            )}
-
-            {message && (
-              <Fade in timeout={400}>
-                <Alert severity={message.type} sx={{ borderRadius: 2 }}>
-                  {message.text}
-                </Alert>
-              </Fade>
-            )}
-
-            <form onSubmit={onSubmit}>
-              <Stack spacing={3}>
-                <PhoneInput register={register} errors={errors} name="phone" />
-
-                {stage === "otp" && (
-                  <>
-                    <Box sx={{ textAlign: "center", mb: 2 }}>
-                      <Chip
-                        label={`Code sent to ${phoneNumber}`}
-                        variant="outlined"
-                        color="primary"
-                        sx={{ borderRadius: 2 }}
-                      />
-                      <Button
-                        size="small"
-                        startIcon={<ArrowBackIcon />}
-                        onClick={backToPhone}
-                        sx={{ ml: 2, borderRadius: 2 }}
-                      >
-                        Change Number
-                      </Button>
-                    </Box>
-
-                    <CustomInput
-                      name="otp"
-                      register={register}
-                      errors={errors}
-                      label="6-Digit Verification Code"
-                      placeholder="000000"
-                      icon={<SecurityIcon color="primary" />}
-                      inputStyle={{
-                        letterSpacing: "0.5rem",
-                        textAlign: "center",
-                        fontSize: "1.5rem",
-                        fontWeight: 500,
-                      }}
-                    />
-                  </>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
-                  fullWidth
-                  sx={{
-                    py: 1.5,
-                    fontSize: "1.1rem",
-                    borderRadius: 2,
-                    background:
-                      loading || (stage === "otp" && !phoneNumber)
-                        ? undefined
-                        : "linear-gradient(135deg, #1565C0 0%, #1976D2 100%)",
-                  }}
-                >
-                  {loading
-                    ? stage === "phone"
-                      ? "Sending Code..."
-                      : "Verifying..."
-                    : stage === "phone"
-                    ? "Send Verification Code"
-                    : "Verify & Continue"}
-                </Button>
-              </Stack>
-            </form>
-
-            <Divider sx={{ my: 2 }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                align="center"
-              >
-                Don't have an account?
-              </Typography>
-            </Divider>
-
-            <Button
-              variant="outlined"
-              fullWidth
-              color="primary"
-              onClick={() => navigate("/register")}
-              sx={{ mt: 2, borderRadius: 2 }}
-            >
-              Sign up
-            </Button>
-          </Stack>
-        </Paper>
-      </Box>
-    </Box>
+                {loading ? "Sending OTP..." : "Send OTP"}
+              </Button>
+            </Stack>
+          </form>
+        </Stack>
+      </Paper>
+    </AuthLayout>
   );
 };
 
