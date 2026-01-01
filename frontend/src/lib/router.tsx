@@ -8,6 +8,10 @@ import Admin from "@/pages/AdminPage";
 import Driver from "@/pages/driver/DriversPage";
 import Members from "@/pages/member/MembersPage";
 import Bookings from "@/pages/BookingsPage";
+import VerifyOtp from "@/pages/VerifyOtpPage";
+import HomePage from "@/pages/HomePage";
+
+
 
 import { Layout } from "@/components/Layout";
 import { ErrorPage } from "@/components/ErrorPages";
@@ -17,14 +21,20 @@ import { RequireRole } from "@/auth/RequireRole";
 export const router = createBrowserRouter([
   // Redirect root
   {
-    path: "/",
-    element: <Navigate to={ROUTES.LOGIN} replace />,
-  },
+  path: "/",
+  element: <HomePage />,
+  errorElement: <ErrorPage />,
+},
 
-  // Public
+  // PUBLIC ROUTES
   {
     path: ROUTES.LOGIN,
     element: <Login />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: ROUTES.VERIFY_OTP,
+    element: <VerifyOtp />,
     errorElement: <ErrorPage />,
   },
   {
@@ -32,7 +42,9 @@ export const router = createBrowserRouter([
     element: <Register />,
     errorElement: <ErrorPage />,
   },
+  
 
+  // PROTECTED ROUTES
   {
     element: (
       <AuthCheck>
@@ -42,7 +54,6 @@ export const router = createBrowserRouter([
       </AuthCheck>
     ),
     children: [
-      // MEMBER
       {
         path: ROUTES.MEMBER_ROOT,
         element: (
@@ -51,8 +62,6 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-
-      // DRIVER
       {
         path: ROUTES.DRIVER_ROOT,
         element: (
@@ -61,8 +70,6 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-
-      // ADMIN
       {
         path: ROUTES.ADMIN_ROOT,
         element: (
@@ -71,8 +78,6 @@ export const router = createBrowserRouter([
           </RequireRole>
         ),
       },
-
-      // BOOKINGS (admin + member)
       {
         path: ROUTES.BOOKINGS,
         element: (

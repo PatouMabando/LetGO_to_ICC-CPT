@@ -2,9 +2,32 @@ import { z } from 'zod';
 
 const saPhoneRegex = /^(\+27|0)\d{9}$/;
 
+
+// LOGIN (PHONE ONLY)
+
 export const loginSchema = z.object({
-    phone: z.string().min(1),
-    otp: z.string().optional(),
+  phone: z
+    .string()
+    .transform((v) => v.replace(/\s/g, ""))
+    .refine((v) => v.length > 0, {
+      message: "Please fill out the phone number field",
+    })
+    .refine((v) => /^\+?\d+$/.test(v), {
+      message: "Phone number must not contain letters or symbols",
+    })
+    .refine((v) => v.startsWith("+27"), {
+      message: "Phone number must start with +27",
+    })
+    .refine((v) => saPhoneRegex.test(v), {
+      message:
+        "Please type the full South African mobile number (e.g. +27780492663)",
+    }),
+});
+// OTP (OTP ONLY)
+export const otpSchema = z.object({
+  otp: z
+    .string()
+    .length(6, "OTP must be exactly 6 digits"),
 });
 
 

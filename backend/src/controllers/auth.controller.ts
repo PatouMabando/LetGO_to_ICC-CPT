@@ -20,6 +20,10 @@ const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 
 export const register = async (req: Request, res: Response) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({ error: "Request body is required" });
+    }
+
     const {
       name,
       lastName,

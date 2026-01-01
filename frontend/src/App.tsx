@@ -1,9 +1,12 @@
 import "@fontsource/inter";
+import "@fontsource/russo-one";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { CssBaseline, CssVarsProvider } from "@mui/joy";
 import { AuthProvider } from "@/context/AuthContext";
 import { RouterProvider } from "react-router-dom";
 import { router } from "@/lib/router";
+
+
 
 function App() {
   return (

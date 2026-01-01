@@ -1,213 +1,180 @@
+// pages/Register.tsx
 import React from "react";
 import {
+  Box,
+  Button,
   Paper,
   Stack,
   TextField,
-  Button,
   Typography,
   Alert,
   InputAdornment,
-  Box,
   Divider,
-  Card,
-  CardContent,
   Fade,
-  Chip,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
   FormHelperText,
-  Link as MUILink,
+  Collapse,
 } from "@mui/material";
-import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
-import ChurchIcon from "@mui/icons-material/Church";
-import DirectionsBusIcon from "@mui/icons-material/DirectionsBus";
-import BadgeIcon from "@mui/icons-material/Badge";
-import DriveEtaIcon from "@mui/icons-material/DriveEta";
-
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+
+import BadgeIcon from "@mui/icons-material/Badge";
+import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 
 import { registerSchema } from "@/validations/auth";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { toast } from "react-hot-toast";
+import { BASE, asJson } from "@/api";
+import RegisterLayout from "@/components/RegisterLayout";
 
-import { BASE, asJson } from "@/api/index";
-import { z } from "zod";
+import registerImage from "@/assets/register-illustration.svg";
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-const Register: React.FC = () => {
+const inputSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "12px",
+    "& fieldset": { borderColor: "#CBD5E1" },
+    "&:hover fieldset": { borderColor: "#FF9900" },
+    "&.Mui-focused fieldset": {
+      borderColor: "#FF9900",
+      borderWidth: 2,
+    },
+  },
+};
+
+const Register = () => {
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors },
     watch,
+    formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
-  const isDriver = watch("role") === "driver";
+  const role = watch("role");
+  const isDriver = role === "driver";
+
+  const [loading, setLoading] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
-  const [isSigningUp, setIsSigningUp] = React.useState(false);
 
-  const signup = async (data: RegisterFormValues) => {
-    const response = await fetch(`${BASE}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    return asJson(response);
-  };
-
-  const onSubmit = handleSubmit(async (values: RegisterFormValues) => {
+  const onSubmit = handleSubmit(async (values) => {
+    setLoading(true);
     setMessage(null);
-    setIsSigningUp(true);
     try {
-      await signup(values);
-      setMessage("Registration successful. You can now log in.");
+      const res = await fetch(`${BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      await asJson(res);
       navigate("/login");
-    } catch (error: any) {
-      toast.error(error?.message || "Registration failed");
-      setMessage(error?.message || "Registration failed. Please try again.");
+    } catch (err: any) {
+      setMessage(err?.message || "Registration failed");
     } finally {
-      setIsSigningUp(false);
+      setLoading(false);
     }
   });
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #E3F2FD 0%, #F1F8FE 50%, #FAFBFF 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 2,
-      }}
-    >
-      <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
-        <Card
-          elevation={0}
+    <>
+      {/* HEADER */}
+      <Box sx={{ bgcolor: "#142C54", py: 4, textAlign: "center" }}>
+        <Typography
           sx={{
-            mb: 3,
-            background: "linear-gradient(135deg, #1565C0 0%, #1976D2 100%)",
-            color: "white",
+            fontFamily: "Poppins",
+            fontWeight: 700,
+            fontSize: { xs: "1.6rem", md: "2rem" },
+            color: "#fff",
           }}
         >
-          <CardContent sx={{ textAlign: "center", py: 3 }}>
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  p: 1.5,
-                  borderRadius: 2,
-                  bgcolor: "rgba(255, 255, 255, 0.15)",
-                }}
-              >
-                <ChurchIcon sx={{ fontSize: 28 }} />
-                <DirectionsBusIcon sx={{ fontSize: 24 }} />
-              </Box>
-            </Box>
-            <Typography variant="h4" fontWeight={600} gutterBottom>
-              Create Your Account
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Register to join trips and (optionally) offer lifts
-            </Typography>
-          </CardContent>
-        </Card>
+          Become a{" "}
+          <Box component="span" sx={{ color: "#FF9900" }}>
+            Verified Member
+          </Box>
+        </Typography>
+      </Box>
 
+      {/* BODY */}
+      <RegisterLayout image={<img src={registerImage} width="100%" />}>
         <Paper
-          elevation={8}
+          elevation={0}
           sx={{
             p: 4,
-            borderRadius: 3,
-            background: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(10px)",
+            width: "100%",
+            maxWidth: 440,
+            bgcolor: "transparent",
+            alignSelf: "center",
           }}
         >
           <Stack spacing={3}>
-            {message && (
-              <Fade in timeout={300}>
-                <Alert
-                  severity={
-                    message.startsWith("Registration successful")
-                      ? "success"
-                      : "error"
-                  }
-                  sx={{ borderRadius: 2 }}
-                >
-                  {message}
-                </Alert>
-              </Fade>
-            )}
-
-            <form onSubmit={onSubmit}>
-              <Stack spacing={3}>
-                {/* Name Fields */}
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                  <TextField
-                    label="First Name"
-                    {...register("name")}
-                    fullWidth
-                    required
-                    error={!!errors.name}
-                    helperText={errors.name?.message}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <BadgeIcon color="primary" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <TextField
-                    label="Last Name"
-                    {...register("lastName")}
-                    fullWidth
-                    required
-                    error={!!errors.lastName}
-                    helperText={errors.lastName?.message}
-                  />
-                </Stack>
-
-                {/* Phone */}
+            
+            <form onSubmit={onSubmit} noValidate>
+              <Stack spacing={2.5}>
+                {/* FIRST NAME */}
                 <TextField
-                  label="Mobile Number (E.164)"
-                  placeholder="+27821234567"
-                  {...register("phoneNumber")}
-                  fullWidth
-                  required
-                  error={!!errors.phoneNumber}
-                  helperText={
-                    errors.phoneNumber?.message || "Example: +27821234567"
-                  }
+                  label="First name"
+                  {...register("name")}
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                  sx={inputSx}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <PhoneIphoneIcon color="primary" />
+                        <BadgeIcon sx={{ color: "#FF9900" }} />
                       </InputAdornment>
                     ),
                   }}
                 />
 
-                {/* Role */}
-                <FormControl fullWidth required error={!!errors.role}>
-                  <InputLabel id="role-select-label">Role</InputLabel>
+                {/* LAST NAME */}
+                <TextField
+                  label="Last name"
+                  {...register("lastName")}
+                  error={!!errors.lastName}
+                  helperText={errors.lastName?.message}
+                  sx={inputSx}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <BadgeIcon sx={{ color: "#FF9900" }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+
+                {/* PHONE */}
+                <TextField
+                  label="Phone number"
+                  placeholder="+27780492663"
+                  {...register("phoneNumber")}
+                  error={!!errors.phoneNumber}
+                  helperText={errors.phoneNumber?.message}
+                  sx={inputSx}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PhoneIphoneIcon sx={{ color: "#FF9900" }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+
+                {/* ROLE */}
+                <FormControl fullWidth error={!!errors.role} sx={inputSx}>
+                  <InputLabel>Role</InputLabel>
                   <Controller
                     name="role"
                     control={control}
                     render={({ field }) => (
-                      <Select labelId="role-select-label" {...field}>
+                      <Select {...field} label="Role">
                         <MenuItem value="member">Member</MenuItem>
                         <MenuItem value="driver">Driver</MenuItem>
                         <MenuItem value="admin">Admin</MenuItem>
@@ -215,97 +182,98 @@ const Register: React.FC = () => {
                     )}
                   />
                   {errors.role && (
-                    <FormHelperText>
-                      {errors.role.message as string}
-                    </FormHelperText>
+                    <FormHelperText>{errors.role.message}</FormHelperText>
                   )}
                 </FormControl>
 
-                {isDriver && (
-                  <Fade in>
-                    <Box>
-                      <Divider sx={{ mb: 2 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Driver Details
-                        </Typography>
-                      </Divider>
-                      <Chip
-                        icon={<DriveEtaIcon />}
-                        label="Provide your vehicle details"
-                        variant="outlined"
-                        color="primary"
-                        sx={{ mb: 2, borderRadius: 2 }}
-                      />
-                      <Stack spacing={2}>
-                        <Stack
-                          direction={{ xs: "column", sm: "row" }}
-                          spacing={2}
-                        >
-                          <TextField
-                            label="Car Model"
-                            {...register("carModel")}
-                          />
-                          <TextField
-                            label="Car Color"
-                            {...register("carColor")}
-                          />
-                        </Stack>
-                        <Stack
-                          direction={{ xs: "column", sm: "row" }}
-                          spacing={2}
-                        >
-                          <TextField
-                            label="Plate Number"
-                            {...register("carPlate")}
-                          />
-                          <TextField
-                            label="Car Type"
-                            {...register("carType")}
-                          />
-                        </Stack>
-                        <TextField
-                          label="Year (YYYY)"
-                          {...register("carYear")}
-                          error={!!errors.carYear}
-                          helperText={errors.carYear?.message}
-                          inputProps={{ maxLength: 4, inputMode: "numeric" }}
-                        />
-                      </Stack>
-                    </Box>
-                  </Fade>
-                )}
+                {/* DRIVER — EXPAND DOWN ONLY */}
+                <Collapse in={isDriver} timeout={300} unmountOnExit>
+                  <Box
+                    sx={{
+                      mt: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      bgcolor: "#F8FAFC",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: "Poppins",
+                        fontWeight: 600,
+                        mb: 2,
+                        color: "#142C54",
+                      }}
+                    >
+                      Driver details
+                    </Typography>
 
+                    <Stack spacing={2}>
+                      <TextField label="Car Model" {...register("carModel")} sx={inputSx} />
+                      <TextField label="Car Color" {...register("carColor")} sx={inputSx} />
+                      <TextField label="Car Plate" {...register("carPlate")} sx={inputSx} />
+                      <TextField label="Car Type" {...register("carType")} sx={inputSx} />
+                      <TextField
+                        label="Car Year"
+                        {...register("carYear")}
+                        error={!!errors.carYear}
+                        helperText={errors.carYear?.message}
+                        sx={inputSx}
+                        inputProps={{ inputMode: "numeric", maxLength: 4 }}
+                      />
+                    </Stack>
+                  </Box>
+                </Collapse>
+        {/* MAIN ERROR */}        
+{message && (
+              <Fade in>
+                <Alert
+                  severity="error"
+                  sx={{
+                    bgcolor: "#FFF7ED",
+                    border: "1px solid #FF9900",
+                    color: "#9A3412",
+                  }}
+                >
+                  {message}
+                </Alert>
+              </Fade>
+            )}
+
+                {/* SUBMIT */}
                 <Button
                   type="submit"
-                  variant="contained"
                   size="large"
-                  disabled={isSigningUp}
-                  fullWidth
+                  disabled={loading}
+                  sx={{
+                    bgcolor: "#FF9900",
+                    borderRadius: "12px",
+                    fontWeight: 600,
+                    color: "#ffffff",
+                    "&:hover": { bgcolor: "#e68a00" },
+                  }}
                 >
-                  {isSigningUp ? "Registering..." : "Create Account"}
+                  {loading ? "Registering..." : "Register"}
                 </Button>
 
-                <Divider sx={{ my: 2 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Already have an account?
-                  </Typography>
-                </Divider>
+                <Divider />
 
                 <Button
                   variant="outlined"
-                  fullWidth
-                  color="primary"
                   onClick={() => navigate("/login")}
-                  sx={{ mt: 2, borderRadius: 2 }}
+                  sx={{
+                    borderRadius: "12px",
+                    borderColor: "#142C54",
+                    color: "#142C54",
+                  }}
                 >
-                  Sign in
+                  Already have an account? Login
                 </Button>
               </Stack>
             </form>
           </Stack>
         </Paper>
-      </Box>
-    </Box>
+      </RegisterLayout>
+    </>
   );
 };
 
