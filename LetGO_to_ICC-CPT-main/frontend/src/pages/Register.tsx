@@ -103,7 +103,7 @@ const Register = () => {
       </Box>
 
       {/* BODY */}
-      <RegisterLayout image={<img src={registerImage} width="120%" />}>
+      <RegisterLayout image={<img src={registerImage} width="100%" />}>
         <Paper
           elevation={0}
           sx={{
