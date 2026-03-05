@@ -1,4 +1,17 @@
-// pages/Register.tsx
+/**
+ * @file src/pages/Register.tsx
+ * @description
+ * Registration page (public).
+ * - UI matches the Login theme (orange focus + rounded fields).
+ * - Fields:
+ *   - All roles: Full name, Phone number, Role
+ *   - Member/Driver: Address (hidden for Admin)
+ *   - Driver only: Vehicle details (expands)
+ * - Data safety:
+ *   - When role switches to Admin → clears address automatically
+ *   - When role switches away from Driver → clears car fields automatically
+ */
+
 import React from "react";
 import {
   Box,
@@ -25,12 +38,14 @@ import { z } from "zod";
 
 import BadgeIcon from "@mui/icons-material/Badge";
 import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 import { registerSchema } from "@/validations/auth";
 import { BASE, asJson } from "@/api";
 import RegisterLayout from "@/components/RegisterLayout";
 
 import registerImage from "@/assets/register-illustration.svg";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -54,9 +69,11 @@ const Register = () => {
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    mode: "onSubmit",
   });
 
   const role = watch("role");
@@ -64,6 +81,23 @@ const Register = () => {
 
   const [loading, setLoading] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
+
+  // ✅ Keep submitted payload clean when user changes role
+  React.useEffect(() => {
+    // Admin doesn't need address
+    if (role === "admin") {
+      setValue("address", "");
+    }
+
+    // If not driver, clear driver-only fields
+    if (role !== "driver") {
+      setValue("carModel", "");
+      setValue("carColor", "");
+      setValue("carPlate", "");
+      setValue("carType", "");
+      setValue("carYear", "");
+    }
+  }, [role, setValue]);
 
   const onSubmit = handleSubmit(async (values) => {
     setLoading(true);
@@ -101,7 +135,30 @@ const Register = () => {
           </Box>
         </Typography>
       </Box>
-
+ {/* BACK ARROW */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 24,
+          left: 24,
+          zIndex: 10,
+        }}
+      >
+        <Button
+          onClick={() => navigate("/")}
+          sx={{
+            minWidth: "auto",
+            p: 1,
+            borderRadius: "50%",
+            bgcolor: "rgba(255,255,255,0.85)",
+            color: "#142C54",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+            "&:hover": { bgcolor: "#FF9900", color: "#fff" },
+          }}
+        >
+          <ArrowBackIcon sx={{ fontSize: 28 }} />
+        </Button>
+      </Box>
       {/* BODY */}
       <RegisterLayout image={<img src={registerImage} width="100%" />}>
         <Paper
@@ -115,31 +172,14 @@ const Register = () => {
           }}
         >
           <Stack spacing={3}>
-            
             <form onSubmit={onSubmit} noValidate>
               <Stack spacing={2.5}>
-                {/* FIRST NAME */}
+                {/* FULL NAME */}
                 <TextField
-                  label="First name"
-                  {...register("name")}
-                  error={!!errors.name}
-                  helperText={errors.name?.message}
-                  sx={inputSx}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <BadgeIcon sx={{ color: "#FF9900" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                {/* LAST NAME */}
-                <TextField
-                  label="Last name"
-                  {...register("lastName")}
-                  error={!!errors.lastName}
-                  helperText={errors.lastName?.message}
+                  label="Full name"
+                  {...register("fullName")}
+                  error={!!errors.fullName}
+                  helperText={errors.fullName?.message}
                   sx={inputSx}
                   InputProps={{
                     startAdornment: (
@@ -167,6 +207,25 @@ const Register = () => {
                   }}
                 />
 
+                {/* ADDRESS (hidden for admin) */}
+                {role !== "admin" && (
+                  <TextField
+                    label="Address"
+                    placeholder="e.g. Cape Town Station"
+                    {...register("address")}
+                    error={!!errors.address}
+                    helperText={errors.address?.message}
+                    sx={inputSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationOnIcon sx={{ color: "#FF9900" }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+
                 {/* ROLE */}
                 <FormControl fullWidth error={!!errors.role} sx={inputSx}>
                   <InputLabel>Role</InputLabel>
@@ -186,7 +245,7 @@ const Register = () => {
                   )}
                 </FormControl>
 
-                {/* DRIVER — EXPAND DOWN ONLY */}
+                {/* DRIVER — EXPANDS DOWN ONLY */}
                 <Collapse in={isDriver} timeout={300} unmountOnExit>
                   <Box
                     sx={{
@@ -208,10 +267,34 @@ const Register = () => {
                     </Typography>
 
                     <Stack spacing={2}>
-                      <TextField label="Car Model" {...register("carModel")} sx={inputSx} />
-                      <TextField label="Car Color" {...register("carColor")} sx={inputSx} />
-                      <TextField label="Car Plate" {...register("carPlate")} sx={inputSx} />
-                      <TextField label="Car Type" {...register("carType")} sx={inputSx} />
+                      <TextField
+                        label="Car Model"
+                        {...register("carModel")}
+                        error={!!errors.carModel}
+                        helperText={errors.carModel?.message}
+                        sx={inputSx}
+                      />
+                      <TextField
+                        label="Car Color"
+                        {...register("carColor")}
+                        error={!!errors.carColor}
+                        helperText={errors.carColor?.message}
+                        sx={inputSx}
+                      />
+                      <TextField
+                        label="Car Plate"
+                        {...register("carPlate")}
+                        error={!!errors.carPlate}
+                        helperText={errors.carPlate?.message}
+                        sx={inputSx}
+                      />
+                      <TextField
+                        label="Car Type"
+                        {...register("carType")}
+                        error={!!errors.carType}
+                        helperText={errors.carType?.message}
+                        sx={inputSx}
+                      />
                       <TextField
                         label="Car Year"
                         {...register("carYear")}
@@ -223,21 +306,24 @@ const Register = () => {
                     </Stack>
                   </Box>
                 </Collapse>
-        {/* MAIN ERROR */}        
-{message && (
-              <Fade in>
-                <Alert
-                  severity="error"
-                  sx={{
-                    bgcolor: "#FFF7ED",
-                    border: "1px solid #FF9900",
-                    color: "#9A3412",
-                  }}
-                >
-                  {message}
-                </Alert>
-              </Fade>
-            )}
+
+                {/* MAIN ERROR */}
+                {message && (
+                  <Fade in>
+                    <Alert
+                      severity="error"
+                      sx={{
+                        borderRadius: 2,
+                        bgcolor: "#FFF7ED",
+                        border: "1px solid #FF9900",
+                        color: "#9A3412",
+                        "& .MuiAlert-icon": { color: "#FF9900" },
+                      }}
+                    >
+                      {message}
+                    </Alert>
+                  </Fade>
+                )}
 
                 {/* SUBMIT */}
                 <Button
@@ -249,6 +335,7 @@ const Register = () => {
                     borderRadius: "12px",
                     fontWeight: 600,
                     color: "#ffffff",
+                    textTransform: "none",
                     "&:hover": { bgcolor: "#e68a00" },
                   }}
                 >
@@ -257,17 +344,30 @@ const Register = () => {
 
                 <Divider />
 
-                <Button
-                  variant="outlined"
+                  {/* ✅ REGISTER LINK */}
+              <Typography
+                sx={{
+                  textAlign: "center",
+                  fontFamily: "Manrope",
+                  fontWeight: 600,
+                  color: "#475569",
+                  fontSize: "0.95rem",
+                }}
+              >
+                Already have an account?{" "}
+                <Box
+                  component="span"
                   onClick={() => navigate("/login")}
                   sx={{
-                    borderRadius: "12px",
-                    borderColor: "#142C54",
-                    color: "#142C54",
+                    color: "#FF9900",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    "&:hover": { textDecoration: "underline" },
                   }}
                 >
-                  Already have an account? Login
-                </Button>
+                  Login
+                </Box>
+              </Typography>
               </Stack>
             </form>
           </Stack>
