@@ -10,3 +10,4 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+// checking if user is authenticated (has token) before allowing access to protected routes (admin, driver dashboard, member home)
