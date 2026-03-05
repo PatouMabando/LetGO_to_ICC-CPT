@@ -1,4 +1,3 @@
-
 import express, { Application } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -6,10 +5,9 @@ import bodyParser from "body-parser";
 
 import authRoutes from "./routes/auth.route.js"
 import bookingRoutes from "./routes/booking.route.js"
-import tripRoutes from "./routes/trip.route.js"
-import driverAssignmentRoutes from "./routes/driverAssignment.route.js"
+import adminRoutes from "./routes/admin.route.js"
+import driverRoutes from "./routes/driver.route.js"
 import { connectDB } from "./config/db.js";
-
 
 dotenv.config();
 
@@ -27,8 +25,8 @@ app.use(
 // Routes
 app.use("/api/auth", authRoutes); //Authentication
 app.use("/api/bookings", bookingRoutes); //Bookings
-app.use("/api/trips", tripRoutes); //Trips
-app.use("/api/driver-assignments", driverAssignmentRoutes);
+app.use("/api/admin", adminRoutes); // Admin management endpoints
+app.use("/api/driver", driverRoutes); // Driver endpoints
 
 
 // Database

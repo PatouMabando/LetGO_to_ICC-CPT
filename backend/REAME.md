@@ -1,35 +1,41 @@
-# Backend API for Trip Booking Dashboard
+# LetGO to ICC-CPT Backend API
 
 ## Overview
 
-This project is the backend API for a role-based trip booking system. It provides RESTful endpoints for managing members, drivers, bookings, and admin operations. The API is built with Express.js and TypeScript, using MongoDB as the database via Mongoose ODM. It also integrates with Twilio for SMS notifications and uses JWT for authentication.
+This backend powers a secure, admin-controlled trip booking system for church members and drivers. All user management is handled by admins—there is no public registration. The system uses JWT authentication, MongoDB, and supports OTP login for approved users.
 
 ---
 
-## Features
+## Key Features
 
-- User authentication with JWT (Members, Drivers, Admins)
-- Secure password hashing with bcryptjs
-- CRUD operations for users, bookings, and trips
-- Admin seed script to bootstrap initial admin user
-- SMS notifications integration with Twilio
-- CORS enabled for cross-origin requests
-- Environment-based configuration with dotenv
-- TypeScript for static typing and improved code quality
-- Nodemon and TSX for fast development iteration
+- **Admin-Only User Management:**
+  - Only admins can add, approve, edit, or remove members and drivers.
+  - Admins can also add other admins.
+  - No public registration—users must be added by an admin.
+- **OTP Login:**
+  - Approved users receive OTPs for login.
+  - Blocked or pending users cannot log in.
+- **Role-Based Access:**
+  - Members: Book trips, view history, manage address, track drivers.
+  - Drivers: View bookings, start trips, update availability.
+  - Admins: Full control over all users and bookings.
+- **Bootstrap Script:**
+  - Use `bootstrapAdmin.ts` to create the first admin(s) directly in the database.
+- **Booking & Address Management:**
+  - Members can book one-way/round trips, select drivers, and set addresses.
+- **Live Monitoring:**
+  - Admins can view all users and bookings, and monitor live operations.
 
 ---
 
 ## Tech Stack
 
-- Node.js & Express.js (v5)
+- Node.js & Express.js
 - TypeScript
 - MongoDB & Mongoose
 - JWT (jsonwebtoken)
-- bcryptjs (password hashing)
-- Twilio API (SMS messaging)
 - dotenv (env config)
-- nodemon, tsx, ts-node (development tooling)
+- nodemon, tsx (development tooling)
 - CORS middleware
 
 ---
@@ -40,75 +46,77 @@ This project is the backend API for a role-based trip booking system. It provide
 
 - Node.js v16 or higher
 - MongoDB instance (local or cloud)
-- Twilio account (for SMS integration)
-- Create a `.env` file in the root directory with the following variables:
+- (Optional) Twilio account for SMS
+- Create a `.env` file in the root directory with:
 
-PORT=8000
-MONGODB_URI=<your-mongodb-uri>
+```
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/LetGO_to_ICC-CPT
 JWT_SECRET=<your-secret-key>
-TWILIO_ACCOUNT_SID=<your-twilio-account-sid>
-TWILIO_AUTH_TOKEN=<your-twilio-auth-token>
-TWILIO_PHONE_NUMBER=<your-twilio-phone-number>
-
+# Twilio (optional)
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+```
 
 ### Installation
 
-Clone the repository
+Clone the repository:
+
+```sh
 git clone <your-repo-url>
 cd backend
-
-Install dependencies
 npm install
-
-
-
-This command runs the server with `nodemon` and `tsx` for hot-reloading and TypeScript support.
+```
 
 ---
 
 ## Scripts
 
-| Script         | Description                       |
-| -------------- | -------------------------------- |
-| `npm run dev`  | Start development server (nodemon + tsx) |
-| `npm run seed:admin` | Seed an initial admin user (bootstrapAdmin.ts) |
+| Script                                  | Description                              |
+| --------------------------------------- | ---------------------------------------- |
+| `npm run dev`                           | Start development server (nodemon + tsx) |
+| `npx tsx src/scripts/bootstrapAdmin.ts` | Create initial admin user(s)             |
+
+---
+
+## Usage Flow
+
+1. **Bootstrap Admin:**
+   - Run the bootstrap script to create the first admin(s).
+2. **Admin Login:**
+   - Admin logs in with phone number, receives OTP, verifies OTP to get JWT token.
+3. **Admin Adds Users:**
+   - Use `/api/admin/user` endpoint with JWT token to add members, drivers, or more admins.
+4. **User Login:**
+   - Approved users log in with phone number and OTP.
+5. **Role-Based Actions:**
+   - Members and drivers use their respective endpoints as allowed by their role.
 
 ---
 
 ## API Structure
 
-- `src/index.js` - Entry point of the application.
-- `src/routes` - API route definitions for users, bookings, trips, and auth.
+- `src/index.ts` - Entry point of the application.
+- `src/routes` - API route definitions for admin, users, bookings, and auth.
 - `src/controllers` - Controller logic separated from routes.
 - `src/models` - Mongoose models and schemas.
 - `src/middleware` - Middleware for authentication, error handling, etc.
-- `src/services` - Services such as notification handling (Twilio).
-- `src/scripts` - CLI scripts for tasks like seeding an admin user.
+- `src/scripts` - CLI scripts for tasks like seeding admin users.
 
 ---
 
 ## Environment Variables
 
-Make sure to configure your `.env` properly for:
+Configure your `.env` for:
 
 - Database connection string
-- JWT secret key for token signing
-- Twilio credentials for SMS functionality
-- Server listening port
+- JWT secret key
+- (Optional) Twilio credentials for SMS
+- Server port
 
 ---
 
-## Contributing
-
-Contributions and pull requests are welcome! Please follow the existing coding style and write clear commit messages.
-
----
-
-## License
-
-This project is open source and available under the ISC license.
-
----
 
 ## Contact
 
