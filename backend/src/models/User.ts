@@ -31,6 +31,18 @@ const userSchema = new mongoose.Schema(
       default: "member",
     },
 
+
+    status: {
+      type: String,
+      enum: ["pending", "approved", "blocked"],
+      default: "approved",
+    },
+    availability: {
+      type: String,
+      enum: ["available", "not_available"],
+      default: "not_available",
+    },
+
     carModel: {
       type: String,
     },
@@ -54,6 +66,10 @@ const userSchema = new mongoose.Schema(
       lastSentAt: Date,
     },
     phoneVerifiedAt: Date,
+    address: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

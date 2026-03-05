@@ -18,56 +18,12 @@ const OTP_RESEND_COOLDOWN_SECONDS = Number(
 const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 
 
-export const register = async (req: Request, res: Response) => {
-  try {
-    if (!req.body) {
-      return res.status(400).json({ error: "Request body is required" });
-    }
 
-    const {
-      name,
-      lastName,
-      phoneNumber,
-      role,
-      carModel,
-      carColor,
-      carPlate,
-      carType,
-      carYear,
-    } = req.body;
+// Registration is now admin-only. Remove public register endpoint.
 
-    const existingUser = await User.findOne({ phoneNumber });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ error: "User with this phone number already exists." });
-    }
 
-    const user = new User({
-      name,
-      lastName,
-      phoneNumber,
-      role,
-      carModel,
-      carColor,
-      carPlate,
-      carType,
-      carYear,
-    });
-
-    const savedUser = await user.save();
-
-    return res.status(201).json({
-      message: "User created successfully",
-      user: savedUser,
-    });
-  } catch (error) {
-    console.error("Registration error:", error);
-    return res
-      .status(500)
-      .json({ error: "Server error during registration." });
-  }
-};
+// User requests to sign up and admin must accept and confirm their request.
+// Full name, Phone number, email, address.
 
 
 export const login = async (req: Request, res: Response) => {

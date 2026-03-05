@@ -1,44 +1,44 @@
-
-import "dotenv/config";
 import mongoose from "mongoose";
-import User  from "../models/User.js";
+import User from "../models/User.js";
+import dotenv from "dotenv";
 
-async function main() {
-    const uri = process.env.MONGO_URI || process.env.MONGO_URI;
-    const phoneNumber = process.env.ADMIN_PHONE_NUMBER!;
-    const firstName = process.env.ADMIN_FIRST_NAME || "Admin";
-    const lastName = process.env.ADMIN_LAST_NAME || "User";
-    const email = process.env.ADMIN_EMAIL;
+dotenv.config();
 
-    if (!uri || !phoneNumber) {
-        console.error("Missing MONGO_URI/MONGODB_URI or ADMIN_PHONE_NUMBER in env.");
-        process.exit(1);
-    }
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/your-db-name";
 
-    await mongoose.connect(uri);
+const admins = [
+    {
+        name: "Mehdi",
+        lastName: "Kiona",
+        phoneNumber: "+27659546977",
+        role: "admin",
+        status: "approved",
+    },
+    // Add more admin objects here as needed
+    // {
+    //   name: "Second",
+    //   lastName: "Admin",
+    //   phoneNumber: "+27820000001",
+    //   role: "admin",
+    //   status: "approved",
+    // },
+];
 
-    const existing =
-        (await User.findOne({ phoneNumber }).lean()) ||
-        (await User.findOne({ phone: phoneNumber }).lean());
-
-    if (existing) {
-        if (existing.role === "admin") {
-            console.log(`User ${phoneNumber} is already admin. Nothing to do.`);
+async function createAdmins() {
+    await mongoose.connect(MONGO_URI);
+    for (const admin of admins) {
+        const existing = await User.findOne({ phoneNumber: admin.phoneNumber });
+        if (existing) {
+            console.log(`Admin with phone ${admin.phoneNumber} already exists.`);
         } else {
-            await User.updateOne({ _id: existing._id }, { $set: { role: "admin" } });
-            console.log(`Promoted existing user ${phoneNumber} to admin.`);
+            await User.create(admin);
+            console.log(`Admin user ${admin.phoneNumber} created!`);
         }
-    } else {
-        const payload: any = { firstName, lastName, phoneNumber, role: "admin" };
-        if (email) payload.email = email;
-        await User.create(payload);
-        console.log(`Created new admin user ${phoneNumber}.`);
     }
-
-    await mongoose.disconnect();
+    process.exit();
 }
 
-main().catch((err) => {
-    console.error(err);
+createAdmins().catch((err) => {
+    console.error("Error creating admins:", err);
     process.exit(1);
 });
